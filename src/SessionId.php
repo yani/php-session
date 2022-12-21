@@ -22,74 +22,29 @@ class SessionId implements SessionIdInterface
 
     public function create_sid(): string
     {
-        $prefix = $this->config->getSidPrefix();
-        $desiredOutputLength = $this->config->getSidLength() - strlen($prefix);
-        $bitsPerCharacter = $this->config->getSidBitsPerCharacter();
+        $length  = $this->config->getSidLength();
+        $charset = $this->config->getSidCharset();
+        $prefix  = $this->config->getSidPrefix();
 
-        $bytesNeeded = (int) ceil($desiredOutputLength * $bitsPerCharacter / 8);
-        $randomInputBytes = random_bytes(max(1, $bytesNeeded));
+        $lengthWithoutPrefix = $length - \strlen($prefix);
 
-        // The below is translated from function bin_to_readable in the PHP source
-        // (ext/session/session.c)
-        static $hexconvtab = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,-';
-
-        $out = '';
-
-        $p = 0;
-        $q = strlen($randomInputBytes);
-        $w = 0;
-        $have = 0;
-
-        $mask = (1 << $bitsPerCharacter) - 1;
-
-        $charsRemaining = $desiredOutputLength;
-        while ($charsRemaining--) {
-            if ($have < $bitsPerCharacter) {
-                if ($p < $q) {
-                    $byte = ord($randomInputBytes[$p++]);
-                    $w |= ($byte << $have);
-                    $have += 8;
-                } else {
-                    // Should never happen. Input must be large enough.
-                    break;
-                }
-            }
-
-            // consume $bitsPerCharacter bits
-            $out .= $hexconvtab[$w & $mask];
-            $w >>= $bitsPerCharacter;
-            $have -= $bitsPerCharacter;
+        $pieces = [];
+        $max    = \strlen($charset) - 1;
+        for ($i = 0; $i < $lengthWithoutPrefix; ++$i) {
+            $pieces [] = $charset[\random_int(0, $max)];
         }
 
-        return $prefix . $out;
+        return $prefix . \implode('', $pieces);
     }
 
     public function validate_sid(string $id): bool
     {
-        if (strlen($id) !== $this->config->getSidLength()) {
+        if (\strlen($id) !== $this->config->getSidLength()) {
             return false;
         }
 
-        // Prefix might not validate under the rules for bits=4 or bits=5
-        $prefix = $this->config->getSidPrefix();
-        if ($prefix) {
-            $id = substr($id, strlen($prefix));
-        }
+        $pregSafeString = \preg_quote($this->config->getSidCharset(), '/');
 
-        switch ($this->config->getSidBitsPerCharacter()) {
-            case 4:
-                // 0123456789abcdef
-                return preg_match('/^[0-9a-f]+$/', $id) === 1;
-
-            case 5:
-                // 0123456789abcdefghijklmnopqrstuv
-                return preg_match('/^[0-9a-v]+$/', $id) === 1;
-
-            case 6:
-                // 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,-
-                return preg_match('/^[0-9a-zA-Z,-]+$/', $id) === 1;
-        }
-
-        return false;
+        return \preg_match('/^[' . $pregSafeString . ']+$/', $id) === 1;
     }
 }

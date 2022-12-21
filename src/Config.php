@@ -121,9 +121,9 @@ class Config
 
     public function setSidLength(int $sid_length): self
     {
-        if ($sid_length < 22 || $sid_length > 256) {
+        if ($sid_length < 32 || $sid_length > 256) {
             throw new InvalidArgumentException(
-                '$sid_length must be at least 22 and not greater than 256'
+                'sid_length must be at least 32 and not greater than 256'
             );
         }
 
@@ -136,28 +136,17 @@ class Config
         return $this->sid_length;
     }
 
-    protected int $sid_bits_per_character = 4;
+    protected string $sid_charset = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    public function setSidBitsPerCharacter(int $sid_bits_per_character): self
+    public function setSidCharset(string $sid_charset): self
     {
-        if ($sid_bits_per_character < 4 || $sid_bits_per_character > 6) {
-            throw new InvalidArgumentException(
-                '$sid_bits_per_character must be at least 4 and not greater than than 6'
-            );
-        }
-
-        $this->sid_bits_per_character = $sid_bits_per_character;
-
-        if ($sid_bits_per_character >= 5 && $this->sid_length < 26) {
-            $this->setSidLength(26);
-        }
-
+        $this->sid_charset = $sid_charset;
         return $this;
     }
 
-    public function getSidBitsPerCharacter(): int
+    public function getSidCharset(): string
     {
-        return $this->sid_bits_per_character;
+        return $this->sid_charset;
     }
 
     protected bool $lazy_write = true;

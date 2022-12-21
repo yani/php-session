@@ -131,11 +131,11 @@ class Factory
             $config->setSidLength($settings['sid_length']);
         }
 
-        if (isset($settings['sid_bits_per_character'])) {
-            if (!is_int($settings['sid_bits_per_character'])) {
-                throw new InvalidArgumentException('sid_bits_per_character must be an integer');
+        if (isset($settings['sid_charset'])) {
+            if (!is_string($settings['sid_charset'])) {
+                throw new InvalidArgumentException('sid_charset must be a string');
             }
-            $config->setSidBitsPerCharacter($settings['sid_bits_per_character']);
+            $config->setSidCharset($settings['sid_charset']);
         }
 
         if (isset($settings['lazy_write'])) {
@@ -201,10 +201,6 @@ class Factory
 
         if (ini_get('session.sid_length') !== false) {
             $config->setSidLength((int) ini_get('session.sid_length'));
-        }
-
-        if (ini_get('session.sid_bits_per_character') !== false) {
-            $config->setSidBitsPerCharacter((int) ini_get('session.sid_bits_per_character'));
         }
 
         $config->setLazyWrite((bool) ini_get('session.lazy_write'));
